@@ -11,7 +11,8 @@ define("EXAMPLE_1", FALSE);
 define("EXAMPLE_2", FALSE);
 define("EXAMPLE_3", FALSE);
 define("EXAMPLE_4", FALSE);
-define("EXAMPLE_5", TRUE);
+define("EXAMPLE_5", FALSE);         // Demonstrate adapter
+define("EXAMPLE_6", TRUE);
 
 $consumerKey        = 'XXXXXXXXXXXXXXXXXXXXXXXXX';
 $consumerSecret     = 'XXXXXXXXXXXXXXXXXXXXXXXXX';
@@ -114,6 +115,34 @@ if (EXAMPLE_5) {
     $fakerEntity->setPropertiesWithKVP($aProps);
     
     SocialRequestAdapter::doBroadcastStatusUpdates(array($tweetEntity, $fbEntity, $fakerEntity));
+    
+    print_r($tObj);
+}
+
+if (EXAMPLE_6) {
+    echo    "/////////////////// 5 - Adapter Req ///////////////////\n";
+    $status_msg     = "It seems like the adapter pattern should be more common. "
+                            .date("Y-m-d H:i:s");
+    echo "Updating Facebook page status to: ".$status_msg."\n";
+    
+    /////////////////////////////////////
+    // Facebook
+    $fb_username    = 'xxxxxxxxxxxxxx';
+    $fbAppId        = 'xxxxxxxxxxxxxx';
+    $fbSecretKey    = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    $fbEntity       = new Entity('facebook', 'socialrequest');
+    $aProps         = array('fb_app_id'=>$fbAppId,
+                            'fb_api_secret'=>$fbSecretKey,
+                            'fb_status_msg'=>$status_msg,
+                            'fb_username'=>'someusername',
+                            'fb_scope'=>'manage_pages',
+                            'fb_graph_api'=>'feed',
+                            'fb_link'=>'http://plotto.me/',
+                            'fb_picture'=>'http://www.plotto.me/iphone_120w.png'
+);
+    $fbEntity->setPropertiesWithKVP($aProps);
+    
+    SocialRequestAdapter::doBroadcastStatusUpdates(array($fbEntity));
     
     print_r($tObj);
 }

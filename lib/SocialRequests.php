@@ -8,8 +8,8 @@
 
 require_once 'Request.php';
 require_once 'Entity.php';
-require_once 'OAuth.php';
-// require_once 'twitteroath.php';
+require_once 'OAuth.php';                       // OAuth, Twitter
+require_once 'facebook/facebook.php';           // Facebook
 
 define('TWITTER_BASE_URI', 'api.twitter.com/1/');
 define('PROTOCOL_HTTP', 'http');
@@ -81,9 +81,8 @@ require_once 'facebook/facebook.php';
  */
 class FacebookRequest extends HttpExternalRequest {
 	
-	const FB_PERMISSIONS = 'publish_stream';
+    const FB_PERMISSIONS = 'publish_stream';
     
-    // http://stackoverflow.com/questions/9575782/facebook-api-news-feed-with-wall-posts
     /**
      * Required parameters for entity include:
      * - api_key
@@ -95,33 +94,52 @@ class FacebookRequest extends HttpExternalRequest {
     }
     
     /**
-     * Wrapper for Facebook wall post
+     * Wrapper for Facebook wall post. Supports a message, picture and link.
      * - 
      * @return void
-	 * @example 
+     * @example 
 	   $fbEntity        = new Entity('facebook', 'socialrequest');
-       $aProps          = array('fb_api_id'=>$fbAppId,
+           $aProps          = array('fb_app_id'=>$fbAppId,
                                 'fb_api_secret'=>$fbSecretKey,
-								'fb_status_msg'=>$status_msg,
-								'fb_username'=>'someusername');
+				'fb_status_msg'=>$status_msg,
+                		'fb_username'=>'someusername',
+                                'fb_scope'=>'manage_pages',
+                                'fb_graph_api'=>'feed',
+                                'fb_picture'=>NULL,
+                                'fb_link'=>NULL);
+     
+     
+     
 	   $fbEntity->setPropertiesWithKVP($aProps);
 	   $fbReq           = new FacebookRequest($fbEntity);
 	   $result          = $fbReq->doSocialPost();				
      */
     public function doSocialPost() {
-		
-        $fb     = new Facebook(array('appId'  => $this->myEntity->properties->fb_api_id, 
-									 'secret' => $this->myEntity->properties->fb_api_secret,
-									 'scope'  => FacebookRequest::FB_PERMISSIONS));
-            try {
-			  $apiurl = '/'.$this->myEntity->properties->fb_username.'/feed/';
-			  $res = $fb->api($apiurl,'post',array('message' => $this->myEntity->properties->fb_status_msg));
-			  return $res;
-            } catch (FacebookApiException $e) {
-              error_log($e);
-			  return FALSE;
-            }
-        
+
+        $fb = new Facebook(array(
+                    'appId' => $this->myEntity->properties->fb_app_id,
+                    'secret' => $this->myEntity->properties->fb_api_secret
+                ));
+        try {
+            $apiurl = '/'
+                    . $this->myEntity->properties->fb_username
+                    . '/' . $this->myEntity->properties->fb_graph_api
+                    . '/';
+            $kvp    = array('message' => $this->myEntity->properties->fb_status_msg);
+            
+            if (isset($this->myEntity->properties->fb_picture) 
+                && $this->myEntity->properties->fb_picture)
+                array_push ($kvp, array('picture'=>$this->myEntity->properties->fb_picture));
+            if (isset($this->myEntity->properties->fb_link) 
+                && $this->myEntity->properties->fb_link)
+                array_push ($kvp, array('link'=>$this->myEntity->properties->fb_link));
+            
+            $res    = $fb->api($apiurl, 'post', $kvp);
+            return $res;
+        } catch (FacebookApiException $e) {
+            error_log($e);
+            return FALSE;
+        }
     }
 }
 
